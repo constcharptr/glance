@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"dhilln"
+	],
+	"copyright": "Copyright © 2020, dhilln",
+	"dependencies": {
+		"gtk-d": "~>3.9.0"
+	},
+	"description": "Image viewer written in D using GTK",
+	"license": "MIT",
+	"name": "glance"
+}

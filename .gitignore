@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/glance
+glance.so
+glance.dylib
+glance.dll
+glance.a
+glance.lib
+glance-test-*
+*.exe
+*.o
+*.obj
+*.lst
+ui.glade~
+glance
