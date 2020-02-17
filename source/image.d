@@ -22,11 +22,16 @@ enum ScalingMode: string {
 }
 
 Pixbuf zoomImage(Pixbuf originalPixbuf, int scale) {
+    import std.conv : to;
+
     Pixbuf zoomedPixbuf;
 
     int width = originalPixbuf.getWidth();
     int height = originalPixbuf.getHeight();
-    zoomedPixbuf = originalPixbuf.scaleSimple(width * scale, height * scale, GdkInterpType.BILINEAR);
+
+    int newWidth = (width * scale);
+    int newHeight = (height * scale);
+    zoomedPixbuf = originalPixbuf.scaleSimple(newWidth, newHeight, GdkInterpType.BILINEAR);
 
     return zoomedPixbuf;
 }

@@ -12,6 +12,11 @@
     <property name="can_focus">False</property>
     <property name="icon_name">object-rotate-right</property>
   </object>
+  <object class="GtkAdjustment" id="zoomAdjustment">
+    <property name="upper">10</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">1</property>
+  </object>
   <object class="GtkImage" id="zoomScaleDecrease">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -107,6 +112,7 @@
                     <property name="receives_default">True</property>
                     <property name="orientation">vertical</property>
                     <property name="size">button</property>
+                    <property name="adjustment">zoomAdjustment</property>
                     <property name="icons">zoom</property>
                     <child internal-child="plus_button">
                       <object class="GtkButton">

@@ -25,12 +25,16 @@ class MainWindow {
     import gdk.Event;
     import cairo.Context;
 
-    import glib.Timeout;
-    import gobject.Signals;
-
-    import gtk.Window, gtk.FileChooserDialog;
-    import gtk.Container, gtk.HeaderBar, gtk.ScrolledWindow, gtk.Viewport;
-    import gtk.Button, gtk.Image, gtk.ComboBox, gtk.ComboBoxText;
+    import gtk.Window;
+    import gtk.FileChooserDialog;
+    import gtk.Container;
+    import gtk.HeaderBar;
+    import gtk.ScrolledWindow;
+    import gtk.Viewport;
+    import gtk.Button;
+    import gtk.ScaleButton;
+    import gtk.Image;
+    import gtk.ComboBoxText;
     
     private string _imagePath;
     private ScalingMode _scalingMode = ScalingMode.stretch;
@@ -62,6 +66,7 @@ class MainWindow {
     private ComboBoxText aspectCombo;
     private ScrolledWindow scrolledWindow;
     private Viewport viewPort;
+    private ScaleButton zoomScaleButton;
     private Image imageView;
 
     public this() {
@@ -75,6 +80,7 @@ class MainWindow {
         headerBar =  cast(HeaderBar) builder.getObject("headerBar");
         scrolledWindow = cast(ScrolledWindow) builder.getObject("scrolledWindow");
         viewPort = cast(Viewport) builder.getObject("viewPort");
+        zoomScaleButton = cast(ScaleButton) builder.getObject("zoomScaleButton");
         imageView = cast(Image)  builder.getObject("imageView");
         aspectCombo = cast(ComboBoxText) builder.getObject("aspectCombo");
  
@@ -92,8 +98,9 @@ class MainWindow {
         auto openButton = cast(Button) builder.getObject("openButton");
         openButton.addOnClicked(toDelegate(&openButtonPressed));
 
-        aspectCombo.setActive(0);
+        zoomScaleButton.addOnValueChanged(toDelegate(&onZoomValueChanged));
 
+        aspectCombo.setActive(0);
         window.showAll();
     }
 
@@ -104,6 +111,41 @@ class MainWindow {
 
             auto scaledImage = scaleImage(imagePath, scrolledWindow, ScalingMode.stretch);
             imageView.setFromPixbuf(scaledImage);
+        }
+    }
+
+    private void onZoomValueChanged(double value, ScaleButton btn) {
+        import std.conv : to;
+
+        //
+        // TODO: This is really shitty and buggy code. Fix this later on.
+        //
+        try {
+            auto v = zoomScaleButton.getValue();
+            double vold;
+
+            auto originalImage = imageView.getPixbuf();
+            auto scaledImage = zoomImage(originalImage, to!int(value));
+            //assert(scaledImage !is null);
+
+            // For keeping the center of the image
+            // Get scrolled window size
+            GtkAllocation size;
+            int baseline;
+            scrolledWindow.getAllocatedSize(size, baseline);
+
+            auto vadjust = scrolledWindow.getVadjustment();
+            vadjust.setValue((vadjust.getValue() + size.width / 2) * (v / vold) - size.width / 2);
+            scrolledWindow.setVadjustment(vadjust);
+
+            auto hadjust = scrolledWindow.getHadjustment();
+            hadjust.setValue((hadjust.getValue() + size.height / 2) * (v / vold) - size.height / 2);
+
+            vold = v;
+            imageView.setFromPixbuf(scaledImage);
+        }
+        catch  (Error e) {
+            // It can and probably will throw at some point
         }
     }
 
