@@ -15,5 +15,8 @@ To copy it, you can run `cp glance /usr/local/bin/glance`.
 ## Usage on Windows
 Complete the setup for [GtkD on Windows](https://github.com/gtkd-developers/GtkD/wiki/Installing-on-Windows) and run `dub build` as normal. `glance.exe` will be built and is runnable as long as the GtkD runtime is installed on the system.
 
+## License
+`glance` is licensed under the MIT license. For more information, see `LICENSE.md`.
+
 ## Contributing
 Read `CONTRIBUTING` for more information about how to contribute to `glance`.
