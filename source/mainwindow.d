@@ -81,6 +81,11 @@ class MainWindow {
         headerBar.setTitle("glance");
         headerBar.setSubtitle("Nothing open");
 
+        version(Windows) {
+            // Disable client side decorations on Windows
+            window.setDecorated(false);
+        }
+
         // Connect resize event
         scrolledWindow.addOnSizeAllocate(toDelegate(&onSizeAllocate));
 
