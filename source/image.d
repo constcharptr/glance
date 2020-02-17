@@ -1,51 +1,61 @@
 /**
   * glance
   * A simple, and efficient image viewer written in GTK 3 and D.
-  * Authors: dhilln, dhilln@github.com
-  * License: MIT, see LICENSE
+  *
+  * @Description: Provides useful image manipulation functions.
+  * @Authors: dhilln, dhilln@github.com
+  * @License: MIT, see LICENSE
   **/
 
 module image;
 
 import gtk.Window;
+import gtk.ScrolledWindow;
 import gtk.Image;
 import gdk.Gdk;
 import gdk.Pixbuf;
 
+/// Enumeration of scaling modes
 enum ScalingMode: string {
     stretch = "Stretch",
-    fill = "Fill",
     center = "Center"
 }
 
-Pixbuf imageWithScalingMode(string imagePath, Window window, ScalingMode mode) {
-    auto pixbuf = new Pixbuf(imagePath);
-	
-    // Get window size
-    int width, height;
-    window.getSize(width, height);
+Pixbuf zoomImage(Pixbuf originalPixbuf, int scale) {
+    Pixbuf zoomedPixbuf;
 
-    if (mode == ScalingMode.stretch) {
-        // Scale to stretch the image across the window
-        pixbuf = pixbuf.scaleSimple(width, height, GdkInterpType.BILINEAR);
-	    return pixbuf;
-    }
-    else { 
-        // TODO: Need to handle other scaling modes here
-        return null;
-    }
+    int width = originalPixbuf.getWidth();
+    int height = originalPixbuf.getHeight();
+    zoomedPixbuf = originalPixbuf.scaleSimple(width * scale, height * scale, GdkInterpType.BILINEAR);
+
+    return zoomedPixbuf;
 }
 
-/*
-int width, height;
-	    window.getSize(width, height);
+Pixbuf scaleImage(string imagePath, ScrolledWindow scroll, ScalingMode mode) {
+    import std.stdio : writefln;
 
-        writefln("window size allocate, new size is: %d x %d", width, height);
+    auto pixbuf = new Pixbuf(imagePath);
+    assert(pixbuf !is null);
 
-        if (imagePath !is null) {
-            writefln("image path: %s", imagePath);
+    Pixbuf scaledPixbuf;
 
-            auto scaledImage = imageWithScalingMode(imagePath, window, scalingMode);
-            imageView.setFromPixbuf(scaledImage);
-        }
-*/
+    // Get scrolled window size
+    GtkAllocation size;
+    int baseline;
+    scroll.getAllocatedSize(size, baseline);
+
+    // Scale based of the current scaling mode
+    // stretch - stretch the image to fill the window
+    // center - center the image inside the window (do nothing)
+
+    if (mode == ScalingMode.stretch) {
+        scaledPixbuf = pixbuf.scaleSimple(size.width, size.height, GdkInterpType.BILINEAR);
+    }
+    else if (mode == ScalingMode.center) {
+        // Return the original pixbuf
+        scaledPixbuf = pixbuf;
+    }
+
+    assert(scaledPixbuf !is null);
+    return scaledPixbuf;
+}

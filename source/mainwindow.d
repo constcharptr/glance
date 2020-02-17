@@ -1,8 +1,8 @@
 /**
   * glance
   * A simple, and efficient image viewer written in GTK 3 and D.
-  * Authors: dhilln, dhilln@github.com
-  * License: MIT, see LICENSE
+  * @Authors: dhilln, dhilln@github.com
+  * @License: MIT, see LICENSE
   **/
 
 module mainwindow;
@@ -11,6 +11,8 @@ module mainwindow;
 import std.stdio;
 import std.string : toStringz;
 import std.typecons;
+import core.time;
+import core.thread.osthread;
 import std.functional : toDelegate;
 
 import image;
@@ -23,17 +25,15 @@ class MainWindow {
     import gdk.Event;
     import cairo.Context;
 
+    import glib.Timeout;
     import gobject.Signals;
 
     import gtk.Window, gtk.FileChooserDialog;
-    import gtk.Container, gtk.HeaderBar;
+    import gtk.Container, gtk.HeaderBar, gtk.ScrolledWindow, gtk.Viewport;
     import gtk.Button, gtk.Image, gtk.ComboBox, gtk.ComboBoxText;
     
     private string _imagePath;
     private ScalingMode _scalingMode = ScalingMode.stretch;
-    private Nullable!int _timerId;
-    private ulong _sizeAllocateEventId;
-    private GdkRectangle _rememberedSize;
 
     /// Returns the image path
     public @property string imagePath() { 
@@ -60,6 +60,8 @@ class MainWindow {
     private Builder builder;
     private HeaderBar headerBar;
     private ComboBoxText aspectCombo;
+    private ScrolledWindow scrolledWindow;
+    private Viewport viewPort;
     private Image imageView;
 
     public this() {
@@ -68,43 +70,36 @@ class MainWindow {
         // Load the UI file
 	    builder.addFromFile("ui.glade");
 
-        // Get the window
+        // Get the widgets
         window = cast(Window) builder.getObject("mainWindow");
         headerBar =  cast(HeaderBar) builder.getObject("headerBar");
-
+        scrolledWindow = cast(ScrolledWindow) builder.getObject("scrolledWindow");
+        viewPort = cast(Viewport) builder.getObject("viewPort");
+        imageView = cast(Image)  builder.getObject("imageView");
+        aspectCombo = cast(ComboBoxText) builder.getObject("aspectCombo");
+ 
         headerBar.setTitle("glance");
         headerBar.setSubtitle("Nothing open");
 
-        // Connect needed events
-        //window.addOnCheckResize(toDelegate(&onWindowResize));
-        //imageView.addOnSizeAllocate(toDelegate(&onSizeAllocate));
-        //Signals.connect(window, "size-allocate", toDelegate(&onSizeAllocate));
-        
+        // Connect resize event
+        scrolledWindow.addOnSizeAllocate(toDelegate(&onSizeAllocate));
+
         auto openButton = cast(Button) builder.getObject("openButton");
         openButton.addOnClicked(toDelegate(&openButtonPressed));
 
-        imageView = cast(Image)  builder.getObject("imageView");
-        aspectCombo = cast(ComboBoxText) builder.getObject("aspectCombo");
-
-        //imageView.addOnDraw(toDelegate(&onImageViewDraw));
-
-        //aspectCombo.addOnChanged(toDelegate(&onAspectChanged));
         aspectCombo.setActive(0);
 
         window.showAll();
     }
 
-    private void onSizeAllocate(Event event, Widget widget) {
-        // Don't install a second timer
-        if (!_timerId.isNull()) {
-            return;
+    private void onSizeAllocate(Allocation alloc, Widget widget) {
+        // Sanity check to make sure that an image is loaded
+        if (imagePath !is null) {
+            writefln("image path: %s", imagePath);
+
+            auto scaledImage = scaleImage(imagePath, scrolledWindow, ScalingMode.stretch);
+            imageView.setFromPixbuf(scaledImage);
         }
-
-        // TODO: Figure out a way to detect when the window resize finished
-
-        // Store remembered size and disconnect the event
-        //_rememberedSize = GdkRectangle(0, 0, width, height);
-
     }
 
     private void openButtonPressed(Button btn) {
@@ -117,21 +112,15 @@ class MainWindow {
             [ResponseType.CANCEL, ResponseType.OK]
         );
 
-        // TODO: Make this shit centered
-        //dialog.setTransientFor(mainWindow);
-        //dialog.setPosition(WindowPosition.CENTER_ON_PARENT);
-
         const auto response = dialog.run();
         if (response == ResponseType.OK) {
             // Load the image
-            string fileName = dialog.getFilename();
-            imagePath = fileName;
-            //imageView.setFromFile(fileName);
+            imagePath = dialog.getFilename();
 
             // Update header bar
             headerBar.setSubtitle(imagePath);
 
-            auto scaledImage = imageWithScalingMode(fileName, window, scalingMode);
+            auto scaledImage = scaleImage(imagePath, scrolledWindow, ScalingMode.stretch);
             imageView.setFromPixbuf(scaledImage);
 
             // Close the dialog after loading

@@ -1,8 +1,8 @@
 /**
   * glance
   * A simple, and efficient image viewer written in GTK 3 and D.
-  * Authors: dhilln, dhilln@github.com
-  * License: MIT, see LICENSE
+  * @Authors: dhilln, dhilln@github.com
+  * @License: MIT, see LICENSE
   **/
 
 /// Phobos imports
